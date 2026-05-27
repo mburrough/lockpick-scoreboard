@@ -1,0 +1,13 @@
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# Contest save files — contain live competition data, not source code
+saves/
+
+# Editor / OS noise
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

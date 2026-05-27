@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Lockpick Contest — Admin</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header>
+  <h1><span id="contestIcon">🔒</span> Lockpick Contest — Admin</h1>
+  <div class="links">
+    <span id="contestName" class="muted"></span>
+    <a href="/scoreboard" target="_blank">Open Scoreboard ↗</a>
+  </div>
+</header>
+
+<main>
+  <div id="startupPanel" class="panel" style="display:none;">
+    <h2>Welcome — Choose a Contest</h2>
+    <p class="muted">Start a new contest, or load an existing save.</p>
+    <div style="margin-bottom:14px;">
+      <button id="btnNewContest">＋ Start new contest</button>
+    </div>
+    <h3 style="margin-bottom:6px;">Saved contests</h3>
+    <div id="savesList" class="muted">Loading…</div>
+  </div>
+
+  <div id="entryPanel" class="panel" style="display:none;">
+    <h2>Record an Open</h2>
+    <form id="openForm" autocomplete="off">
+      <div class="row">
+        <div class="col">
+          <label>Name</label>
+          <input id="inpName" type="text" placeholder="Jane Doe" />
+        </div>
+        <div class="col">
+          <label>Badge #</label>
+          <input id="inpBadge" type="text" placeholder="0123" />
+        </div>
+        <div class="col" style="max-width: 160px;">
+          <label>Lock #</label>
+          <input id="inpLock" type="number" min="1" required />
+        </div>
+        <div class="col" style="flex:0; align-self:flex-end;">
+          <button type="submit">Record Open</button>
+        </div>
+      </div>
+      <div class="kbd-hint">Tip: at least one of name or badge is required. Lock # must be in range.</div>
+    </form>
+    <div style="margin-top:12px;">
+      <button id="btnUndo" class="secondary">Undo last open</button>
+      <span style="float:right;">
+        <a href="/api/export/users.csv" class="secondary" id="btnExportUsers" style="display:inline-block; padding:10px 16px; border-radius:6px; text-decoration:none; background:var(--panel-2); color:var(--text); border:1px solid var(--border); font-weight:600;">⬇ Export users CSV</a>
+        <a href="/api/export/locks.csv" class="secondary" id="btnExportLocks" style="display:inline-block; padding:10px 16px; border-radius:6px; text-decoration:none; background:var(--panel-2); color:var(--text); border:1px solid var(--border); font-weight:600;">⬇ Export locks CSV</a>
+      </span>
+    </div>
+  </div>
+
+  <div id="usersPanel" class="panel" style="display:none;">
+    <h2>Users <span class="muted" id="userCount"></span></h2>
+    <input id="userSearch" placeholder="Search by name or badge…" style="width:100%; margin-bottom:10px;" />
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Badge</th><th style="text-align:right;">Opens</th><th style="text-align:right;">Last open</th></tr>
+      </thead>
+      <tbody id="usersTbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- New contest modal -->
+<div class="modal-bg" id="newContestModal">
+  <div class="modal">
+    <h3>Start New Contest</h3>
+    <p class="muted">This archives the current contest (if any) and starts fresh.</p>
+    <div class="row">
+      <div class="col">
+        <label>Contest name (optional)</label>
+        <input id="ncName" placeholder="Spring 2026 Lockpick Contest" />
+      </div>
+      <div class="col" style="max-width:160px;">
+        <label>Number of locks</label>
+        <input id="ncNumLocks" type="number" min="1" max="1000" value="36" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div class="col">
+        <label>Start date/time (optional — defaults to now)</label>
+        <input id="ncStartAt" type="datetime-local" style="width:100%;" />
+      </div>
+      <div class="col">
+        <label>End date/time (optional — enables countdown)</label>
+        <input id="ncEndAt" type="datetime-local" style="width:100%;" />
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <label>Primary color</label>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input id="ncColor" type="color" value="#4cc9f0" />
+        <span class="muted" style="font-size:13px;">Sets the accent and background color scheme for the scoreboard</span>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <label>Lock make/models (optional, one per line — line N maps to lock #N)</label>
+      <textarea id="ncModels" rows="4" style="width:100%;" placeholder="Master No. 3&#10;Abus 55&#10;Kwikset KW1&#10;..."></textarea>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div class="col">
+        <label>Icon image (optional — replaces 🔒 in header)</label>
+        <input id="ncIcon" type="file" accept="image/*" style="width:100%;" />
+        <div id="ncIconPreview" style="margin-top:6px; min-height:32px;"></div>
+      </div>
+      <div class="col">
+        <label>Background image (optional — shown on scoreboard)</label>
+        <input id="ncBg" type="file" accept="image/*" style="width:100%;" />
+        <div id="ncBgPreview" style="margin-top:6px; min-height:32px;"></div>
+      </div>
+    </div>
+    <div style="margin-top:16px; text-align:right;">
+      <button id="ncCancel" class="secondary">Cancel</button>
+      <button id="ncStart">Start contest</button>
+    </div>
+  </div>
+</div>
+
+<!-- User detail modal -->
+<div class="modal-bg" id="userModal">
+  <div class="modal">
+    <h3 id="umTitle"></h3>
+    <div class="muted" id="umMeta"></div>
+    <h4 style="margin-top:16px;">Locks opened (<span id="umCount">0</span>)</h4>
+    <div class="kbd-hint">Click an unopened lock to mark it opened. Click an opened lock to remove it (you'll be asked to confirm).</div>
+    <div id="umLocks" class="lock-summary"></div>
+    <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; gap:8px;">
+        <button id="umEdit" class="secondary">Edit Player</button>
+        <button id="umDelete" class="danger">Delete Player</button>
+      </div>
+      <button class="secondary" id="umClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit user modal -->
+<div class="modal-bg" id="editUserModal" style="z-index:200;">
+  <div class="modal">
+    <h3>Edit Player</h3>
+    <div class="row">
+      <div class="col">
+        <label>Name</label>
+        <input id="euName" type="text" placeholder="Jane Doe" />
+      </div>
+      <div class="col" style="max-width:200px;">
+        <label>Badge #</label>
+        <input id="euBadge" type="text" placeholder="0123" />
+      </div>
+    </div>
+    <div class="kbd-hint" style="margin-top:8px;">At least one of name or badge is required.</div>
+    <div style="margin-top:16px; text-align:right;">
+      <button id="euCancel" class="secondary">Cancel</button>
+      <button id="euSave">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="/static/theme.js"></script>
+<script src="/static/admin.js"></script>
+</body>
+</html>

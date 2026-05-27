@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Lockpick Scoreboard</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div id="bgOverlay"></div>
+<div class="scoreboard-page">
+  <div class="sb-header">
+    <h1 id="sbTitle"><span id="sbIcon">🔒</span> <span id="sbTitleText">Lockpick Scoreboard</span></h1>
+    <div style="text-align:right;">
+      <div class="meta">
+        <span id="sbMeta"></span>
+        <span class="muted" id="sbUpdated" style="margin-left:12px;"></span>
+      </div>
+      <div id="sbCountdown" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="sbContent">
+    <div class="empty-state">Waiting for contest to start…</div>
+  </div>
+</div>
+<script src="/static/theme.js"></script>
+<script src="/static/scoreboard.js"></script>
+</body>
+</html>
